@@ -154,10 +154,7 @@ function VWFunctions.LogStats()
                 end
             end
         end
-        local headers = {
-            ["Content-type"] = "application/json",
-            ["Authorization"] = "Bearer imsureitwontgetddosed"
-        }
+       
         local data = {
             ["client_id"] = tostring(HWID), 
             ["executor"] = tostring(executor)
