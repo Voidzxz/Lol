@@ -11,20 +11,23 @@ local function getTarget()
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
 
     local origin = workspace.CurrentCamera.CFrame.Position
-    local direction = (mouse.Hit.Position - origin).Unit * 100
+    local direction = (mouse.Hit.Position - origin).Unit * 100 -- Fixed direction calculation
     local result = workspace:Raycast(origin, direction, raycastParams)
 
     if result and result.Instance and result.Instance.Parent:IsA("Model") then
-        return result.Instance.Parent -- Return detected model
+        local targetModel = result.Instance.Parent
+        if targetModel.PrimaryPart then
+            return targetModel -- Ensures PrimaryPart exists before returning
+        end
     end
     return nil
 end
 
 -- Function to smoothly adjust aim toward the target
 local function smoothAim(target)
-    if target then
+    if target and target.PrimaryPart then
         local cam = workspace.CurrentCamera
-        local targetPosition = target.PrimaryPart and target.PrimaryPart.Position or target:GetPivot().Position
+        local targetPosition = target.PrimaryPart.Position -- Ensured PrimaryPart is used
         local tween = TweenService:Create(cam, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(cam.CFrame.Position, targetPosition)})
         tween:Play()
     end
