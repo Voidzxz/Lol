@@ -1,21 +1,23 @@
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local AimAssistEvent = ReplicatedStorage:FindFirstChild("AimAssistEvent")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local aimAssistEnabled = false
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
 
--- Function to detect a target using raycasting
+-- Detect a target using Raycasting
 local function getTarget()
-    local ray = Ray.new(mouse.Origin, mouse.UnitRay.Direction * 100) -- Extend the ray
+    local ray = Ray.new(mouse.Origin, mouse.UnitRay.Direction * 100)
     local target, position = workspace:FindPartOnRay(ray, player.Character)
 
     if target and target.Parent:IsA("Model") then
-        return target.Parent -- Assume it's a player/enemy
+        return target.Parent
     end
     return nil
 end
 
--- Function to smoothly adjust aim toward the target
+-- Smoothly adjust aim toward the target
 local function smoothAim(target)
     if target then
         local cam = workspace.CurrentCamera
@@ -25,7 +27,7 @@ local function smoothAim(target)
     end
 end
 
--- Activate aim assist while holding Mouse X2 (MouseButton4)
+-- Enable aim assist while holding Mouse X2
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton4 then
         aimAssistEnabled = true
@@ -33,7 +35,7 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
--- Disable aim assist when Mouse X2 (MouseButton4) is released
+-- Disable aim assist when Mouse X2 is released
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton4 then
         aimAssistEnabled = false
@@ -41,7 +43,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Continuously check for targets and adjust aim if enabled
+-- Continuously check for targets and adjust aim
 game:GetService("RunService").RenderStepped:Connect(function()
     if aimAssistEnabled then
         local target = getTarget()
@@ -50,3 +52,10 @@ game:GetService("RunService").RenderStepped:Connect(function()
         end
     end
 end)
+
+-- Listen for the event from the server to activate aim assist
+if AimAssistEvent then
+    AimAssistEvent.OnClientEvent:Connect(function()
+        print("Server triggered aim assist")
+    end)
+end
