@@ -1,33 +1,36 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local AimAssistEvent = ReplicatedStorage:FindFirstChild("AimAssistEvent")
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local aimAssistEnabled = false
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
 
--- Detect a target using Raycasting
+-- Function to detect a target using raycasting
 local function getTarget()
-    local ray = Ray.new(mouse.Origin, mouse.UnitRay.Direction * 100)
-    local target, position = workspace:FindPartOnRay(ray, player.Character)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {player.Character} -- Ignore player's own character
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
 
-    if target and target.Parent:IsA("Model") then
-        return target.Parent
+    local origin = workspace.CurrentCamera.CFrame.Position
+    local direction = (mouse.Hit.Position - origin).Unit * 100
+    local result = workspace:Raycast(origin, direction, raycastParams)
+
+    if result and result.Instance and result.Instance.Parent:IsA("Model") then
+        return result.Instance.Parent -- Return detected model
     end
     return nil
 end
 
--- Smoothly adjust aim toward the target
+-- Function to smoothly adjust aim toward the target
 local function smoothAim(target)
     if target then
         local cam = workspace.CurrentCamera
-        local targetCFrame = CFrame.new(cam.CFrame.Position, target.PrimaryPart.Position)
-        local tween = TweenService:Create(cam, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = targetCFrame})
+        local targetPosition = target.PrimaryPart and target.PrimaryPart.Position or target:GetPivot().Position
+        local tween = TweenService:Create(cam, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(cam.CFrame.Position, targetPosition)})
         tween:Play()
     end
 end
 
--- Enable aim assist while holding Mouse X2
+-- Enable aim assist while holding Mouse X2 (MouseButton4)
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton4 then
         aimAssistEnabled = true
@@ -43,7 +46,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Continuously check for targets and adjust aim
+-- Continuously check for targets and adjust aim if enabled
 game:GetService("RunService").RenderStepped:Connect(function()
     if aimAssistEnabled then
         local target = getTarget()
@@ -52,10 +55,3 @@ game:GetService("RunService").RenderStepped:Connect(function()
         end
     end
 end)
-
--- Listen for the event from the server to activate aim assist
-if AimAssistEvent then
-    AimAssistEvent.OnClientEvent:Connect(function()
-        print("Server triggered aim assist")
-    end)
-end
